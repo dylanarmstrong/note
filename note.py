@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
+import os
 from sys import argv
 from time import strftime, localtime
-from yaml import load, dump, CLoader as Loader, CDumper as Dumper
-import os
+from yaml import load, dump
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
 
 def main():
     if len(argv) == 1:
