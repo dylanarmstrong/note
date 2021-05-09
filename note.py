@@ -1,38 +1,58 @@
 #!/usr/bin/env python3
-import os
+from pathlib import Path
 from sys import argv
-from time import strftime, localtime
-from yaml import load, dump
-try:
-    from yaml import CLoader as Loader, CDumper as Dumper
-except ImportError:
-    from yaml import Loader, Dumper
+import argparse
+import datetime
+import os
+import sqlite3
 
 def main():
-    if len(argv) == 1:
-        print('note [note text]')
+    parser = argparse.ArgumentParser(description='Take Notes')
+    parser.add_argument('--read', action='store_true', help='Read current notes')
+    parser.add_argument('words', type=str, nargs='*', help='All the words to put in note', default='')
+    args = parser.parse_args()
+
+    home = str(Path.home())
+    path = f'{home}/notes.db'
+
+    read = args.read
+    words = ' '.join(args.words)
+    if not read and len(words) == 0:
+        print(parser.format_help())
         exit(1)
 
-    data = ''
-    path = '{}/notes.yml'.format(os.environ['HOME'])
-    local = localtime()
-    date = strftime('%B %d, %Y', local)
-    time = strftime('%H:%M', local)
+    con = sqlite3.connect(
+        path,
+        detect_types=sqlite3.PARSE_DECLTYPES
+    )
+    cur = con.cursor()
 
-    if os.path.isfile(path):
-        with open(path) as file:
-            data += file.read()
-        yml = load(data, Loader=Loader)
-        if date not in yml:
-            yml[date] = []
+    if read:
+        cur.execute('select date, note from notes order by date desc')
+        prev_date = ''
+        for [stamp, note] in cur.fetchall():
+            date = stamp.strftime('%B %d, %Y')
+            if prev_date != date:
+                if prev_date != '':
+                    print('')
+                print(f'{date}:')
+                prev_date = date
+            time = stamp.strftime('%H:%M')
+            print(f'- ({time}) {note}')
+
     else:
-        yml = dict({ date: [] })
+        cur.execute('''
+            create table if not exists notes (
+                id integer primary key,
+                date timestamp default (datetime('now', 'localtime')),
+                note text
+            )'''
+        )
 
-    note = ' '.join(argv[1:])
-    yml[date].append('({}) {}'.format(time, note))
+        cur.execute('insert into notes (note) values (?)', [words])
+        con.commit()
 
-    with open(path, 'w') as file:
-        dump(yml, file, Dumper=Dumper, default_flow_style=False)
+    con.close()
 
 if __name__ == '__main__':
     main()
