@@ -38,6 +38,9 @@ def main():
                 print(f'{date}:')
                 prev_date = date
             time = stamp.strftime('%H:%M')
+            space = ' ' * len(f'- ({time}) ')
+            note = note.replace('\n', f'\n{space}')
+
             print(f'- ({time}) {note}')
 
     else:
