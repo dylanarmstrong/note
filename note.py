@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 from pathlib import Path
-from sys import argv
 import argparse
-import datetime
-import os
 import sqlite3
 
 def main():
