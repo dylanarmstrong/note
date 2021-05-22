@@ -12,7 +12,7 @@ This can be read with:
 $ ./note.py --read
 ```
 
-Returning:
+Returning a valid YAML file:
 
 ```
 May 09, 2021:
